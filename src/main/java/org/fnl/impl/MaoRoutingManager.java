@@ -18,7 +18,12 @@ package org.fnl.impl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.Service;
 import org.fnl.intf.MaoRoutingService;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.IPv4;
@@ -27,12 +32,21 @@ import org.onosproject.common.DefaultTopology;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
 import org.onosproject.incubator.net.PortStatisticsService;
-import org.onosproject.net.*;
+import org.onosproject.net.ConnectPoint;
+import org.onosproject.net.DefaultEdgeLink;
+import org.onosproject.net.DefaultPath;
+import org.onosproject.net.DeviceId;
+import org.onosproject.net.EdgeLink;
+import org.onosproject.net.ElementId;
+import org.onosproject.net.Host;
+import org.onosproject.net.HostId;
+import org.onosproject.net.Link;
+import org.onosproject.net.Path;
+import org.onosproject.net.PortNumber;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.flow.DefaultTrafficSelector;
 import org.onosproject.net.flow.DefaultTrafficTreatment;
 import org.onosproject.net.flow.TrafficSelector;
-import org.onosproject.net.flow.criteria.Criteria;
 import org.onosproject.net.flow.criteria.Criterion;
 import org.onosproject.net.host.HostService;
 import org.onosproject.net.intent.Intent;
@@ -44,19 +58,28 @@ import org.onosproject.net.packet.PacketPriority;
 import org.onosproject.net.packet.PacketProcessor;
 import org.onosproject.net.packet.PacketService;
 import org.onosproject.net.provider.ProviderId;
-import org.onosproject.net.topology.*;
-import org.onosproject.routing.IntentSynchronizationService;
+import org.onosproject.net.topology.DefaultTopologyVertex;
+import org.onosproject.net.topology.LinkWeight;
+import org.onosproject.net.topology.Topology;
+import org.onosproject.net.topology.TopologyEdge;
+import org.onosproject.net.topology.TopologyGraph;
+import org.onosproject.net.topology.TopologyService;
+import org.onosproject.net.topology.TopologyVertex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * Skeletal ONOS application component.
  *
- * @author Mao
+ * author: Jianwei Mao
  */
 @Component(immediate = true)
 @Service
@@ -64,7 +87,7 @@ public class MaoRoutingManager implements MaoRoutingService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private final LoadBalanceRouting ROUTING = new LoadBalanceRouting();
+    private final LoadBalanceRouting routing = new LoadBalanceRouting();
 
     @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
     private DeviceService deviceService;
@@ -104,7 +127,7 @@ public class MaoRoutingManager implements MaoRoutingService {
 
         packetService.requestPackets(DefaultTrafficSelector.builder()
                         .matchEthType(Ethernet.TYPE_IPV4).build(),
-                PacketPriority.REACTIVE,appId);
+                PacketPriority.REACTIVE, appId);
 
         log.info("Started");
     }
@@ -114,7 +137,7 @@ public class MaoRoutingManager implements MaoRoutingService {
         packetService.removeProcessor(packetProcessor);
         packetService.cancelPackets(DefaultTrafficSelector.builder()
                         .matchEthType(Ethernet.TYPE_IPV4).build(),
-                PacketPriority.REACTIVE,appId);
+                PacketPriority.REACTIVE, appId);
 
         intentMap.values().forEach(intent -> {
             intentService.withdraw(intent);
@@ -128,12 +151,12 @@ public class MaoRoutingManager implements MaoRoutingService {
 
     @Override
     public Set<Path> getLoadBalancePaths(ElementId src, ElementId dst) {
-        return ROUTING.getLoadBalancePaths(src, dst);
+        return routing.getLoadBalancePaths(src, dst);
     }
 
     @Override
     public Set<Path> getLoadBalancePaths(Topology topo, ElementId src, ElementId dst) {
-        return ROUTING.getLoadBalancePaths(topo, src, dst);
+        return routing.getLoadBalancePaths(topo, src, dst);
     }
 
     private class InternalPacketProcessor implements PacketProcessor {
@@ -202,6 +225,11 @@ public class MaoRoutingManager implements MaoRoutingService {
 
     }
 
+    /**
+     * Load Balance Routing Module.
+     *
+     * author: Jianwei Mao
+     */
     private class LoadBalanceRouting {
 
         //=================== Start =====================
@@ -267,7 +295,8 @@ public class MaoRoutingManager implements MaoRoutingService {
 
                 // --- Four Step by Mao. ---
 
-                Set<List<TopologyEdge>> allRoutes = findAllRoutes(topo, srcLink.dst().deviceId(), dstLink.src().deviceId());
+                Set<List<TopologyEdge>> allRoutes =
+                        findAllRoutes(topo, srcLink.dst().deviceId(), dstLink.src().deviceId());
 
                 Set<Path> allPaths = calculateRoutesCost(allRoutes);
 
@@ -339,8 +368,9 @@ public class MaoRoutingManager implements MaoRoutingService {
                                       List<TopologyVertex> passedDevice,
                                       TopologyGraph topoGraph,
                                       Set<List<TopologyEdge>> result) {
-            if (src.equals(dst))
+            if (src.equals(dst)) {
                 return;
+            }
 
             passedDevice.add(src);
 
@@ -421,8 +451,9 @@ public class MaoRoutingManager implements MaoRoutingService {
         //=================== Step Three: Select one route(Path) =====================
 
         private Path selectRoute(Set<Path> paths) {
-            if (paths.size() < 1)
+            if (paths.size() < 1) {
                 return null;
+            }
 
             return getMinHopPath(getMinCostPath(new ArrayList(paths)));
         }
@@ -434,18 +465,18 @@ public class MaoRoutingManager implements MaoRoutingService {
          */
         private List<Path> getMinCostPath(List<Path> paths) {
 
-            final double MEASURE_TOLERANCE = 0.05; // 0.05% represent 5M(10G), 12.5M(25G), 50M(100G)
+            final double measureTolerance = 0.05; // 0.05% represent 5M(10G), 12.5M(25G), 50M(100G)
 
             //Sort by Cost in order
             paths.sort((p1, p2) -> p1.cost() > p2.cost() ? 1 : (p1.cost() < p2.cost() ? -1 : 0));
 
-            // get paths with similar lowest cost within MEASURE_TOLERANCE range.
+            // get paths with similar lowest cost within measureTolerance range.
             List<Path> minCostPaths = new ArrayList<>();
             Path result = paths.get(0);
             minCostPaths.add(result);
             for (int i = 1, pathCount = paths.size(); i < pathCount; i++) {
                 Path temp = paths.get(i);
-                if (temp.cost() - result.cost() < MEASURE_TOLERANCE) {
+                if (temp.cost() - result.cost() < measureTolerance) {
                     minCostPaths.add(temp);
                 }
             }
@@ -518,7 +549,7 @@ public class MaoRoutingManager implements MaoRoutingService {
     /**
      * Tool for calculating weight value for each Link(TopologyEdge).
      *
-     * @author Mao.
+     * author: Jianwei Mao
      */
     private class BandwidthLinkWeight implements LinkWeight {
 
@@ -542,7 +573,8 @@ public class MaoRoutingManager implements MaoRoutingService {
                 return LINK_WEIGHT_FULL;
             }
 
-            return 100 - interLinkRestBandwidth * 1.0 / linkWireSpeed * 100;//restBandwidthPersent
+            //restBandwidthPersent
+            return 100 - interLinkRestBandwidth * 1.0 / linkWireSpeed * 100;
         }
 
         private long getLinkWireSpeed(Link link) {
@@ -562,18 +594,18 @@ public class MaoRoutingManager implements MaoRoutingService {
         }
 
         /**
-         * Unit: bps
+         * Unit: bps.
          *
          * @param port
          * @return
          */
         private long getPortLoadSpeed(ConnectPoint port) {
-
-            return portStatisticsService.load(port).rate() * 8;//data source: Bps
+            //data source: Bps
+            return portStatisticsService.load(port).rate() * 8;
         }
 
         /**
-         * Unit bps
+         * Unit bps.
          *
          * @param port
          * @return
@@ -581,7 +613,9 @@ public class MaoRoutingManager implements MaoRoutingService {
         private long getPortWireSpeed(ConnectPoint port) {
 
             assert port.elementId() instanceof DeviceId;
-            return deviceService.getPort(port.deviceId(), port.port()).portSpeed() * 1000000;//data source: Mbps
+
+            //data source: Mbps
+            return deviceService.getPort(port.deviceId(), port.port()).portSpeed() * 1000000;
         }
     }
 }

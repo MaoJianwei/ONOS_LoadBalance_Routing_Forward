@@ -1,3 +1,18 @@
+/*
+ * Copyright 2016-present Open Networking Laboratory
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.fnl.rest;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -41,10 +56,10 @@ public class MaoRestResource extends AbstractWebResource {
      */
     @GET
     @Path("hello")
-    public Response hello(){
+    public Response hello() {
         ObjectNode root = mapper().createObjectNode();
         root.put("Hello", 1080)
-                .put("Mao",7181);
+                .put("Mao", 7181);
 
         ArrayNode array = root.putArray("RadioStation");
         array.add("192.168.1.1").add("127.0.0.1").add("10.3.8.211");
@@ -54,16 +69,16 @@ public class MaoRestResource extends AbstractWebResource {
 
 
     /**
-     * Returns real-time links' load
+     * Returns real-time links' load.
      *
      * REST API:
      * http://127.0.0.1:8181/onos/mao/getLinksLoad
      *
-     * @return
+     * @return .
      */
     @GET
     @Path("getLinksLoad")
-    public Response getLinksLoad(){
+    public Response getLinksLoad() {
 
         Set<String> linksList = new HashSet<>();
 
@@ -76,8 +91,9 @@ public class MaoRestResource extends AbstractWebResource {
             ConnectPoint linkSrcPort = link.src();
             ConnectPoint linkDstPort = link.dst();
 
-            if(isEnrolled(linksList, linkSrcPort.deviceId(), linkDstPort.deviceId()))
+            if (isEnrolled(linksList, linkSrcPort.deviceId(), linkDstPort.deviceId())) {
                 return;
+            }
 
             long srcPortWireSpeed = getPortWireSpeed(linkSrcPort);
             long dstPortWireSpeed = getPortWireSpeed(linkDstPort);
@@ -96,7 +112,8 @@ public class MaoRestResource extends AbstractWebResource {
             long linkRestSpeed = getLinkRestSpeed(srcPortRestSpeed, dstPortRestSpeed);
 
             ObjectNode linkNode = mapper().createObjectNode();
-            linkNode.put("Name", (linkSrcPort.deviceId().toString()+ "<->"+linkDstPort.deviceId().toString()).replace("0",""));
+            linkNode.put("Name",
+                    (linkSrcPort.deviceId().toString() + "<->" + linkDstPort.deviceId().toString()).replace("0", ""));
             linkNode.put("Wire", linkWireSpeed);
             linkNode.put("Load", linkLoadSpeed);
             linkNode.put("Rest", linkRestSpeed);
@@ -111,43 +128,44 @@ public class MaoRestResource extends AbstractWebResource {
     }
 
     /**
-     * Unit: bps
+     * Unit: bps.
      * @param port
      * @return
      */
-    private long getPortLoadSpeed(ConnectPoint port){
+    private long getPortLoadSpeed(ConnectPoint port) {
 
-        return portStatisticsService.load(port).rate() * 8;//data source: Bps
-
+        //data source: Bps
+        return portStatisticsService.load(port).rate() * 8;
     }
 
     /**
-     * Unit bps
+     * Unit bps.
      * @param port
      * @return
      */
-    private long getPortWireSpeed(ConnectPoint port){
+    private long getPortWireSpeed(ConnectPoint port) {
 
         assert port.elementId() instanceof DeviceId;
-        return deviceService.getPort(port.deviceId(),port.port()).portSpeed() * 1000000;//data source: Mbps
 
+        //data source: Mbps
+        return deviceService.getPort(port.deviceId(), port.port()).portSpeed() * 1000000;
     }
 
-    private long getLinkLoadSpeed(long src, long dst){
+    private long getLinkLoadSpeed(long src, long dst) {
         return Math.max(src, dst);
     }
 
-    private long getLinkRestSpeed(long src, long dst){
+    private long getLinkRestSpeed(long src, long dst) {
         return Math.min(src, dst);
     }
 
-    private boolean isEnrolled(Set<String> linkList, DeviceId a, DeviceId b){
+    private boolean isEnrolled(Set<String> linkList, DeviceId a, DeviceId b) {
 
-        if(linkList.contains(a.toString()+b.toString()) ||
-                linkList.contains(b.toString()+a.toString())){
+        if (linkList.contains(a.toString() + b.toString()) ||
+                linkList.contains(b.toString() + a.toString())) {
             return true;
         } else {
-            linkList.add(a.toString()+b.toString());
+            linkList.add(a.toString() + b.toString());
             return false;
         }
     }
