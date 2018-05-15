@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fnl.intf;
+package com.maojianwei.sdwan.rest;
 
-import org.onosproject.net.ElementId;
-import org.onosproject.net.Path;
-import org.onosproject.net.topology.Topology;
+import org.onlab.rest.AbstractWebApplication;
 
 import java.util.Set;
 
 /**
- * Created by mao on 9/10/16.
+ * Created by mao on 9/7/16.
  */
-public interface MaoRoutingService {
+public class MaoRestApplication extends AbstractWebApplication {
 
-    Set<Path> getLoadBalancePaths(ElementId src, ElementId dst);
-    Set<Path> getLoadBalancePaths(Topology topo, ElementId src, ElementId dst);
+    @Override
+    public Set<Class<?>> getClasses() {
+        return getClasses(MaoRestResource.class);
+    }
 }

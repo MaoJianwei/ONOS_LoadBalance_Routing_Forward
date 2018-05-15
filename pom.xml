@@ -22,15 +22,30 @@
     <parent>
         <groupId>org.onosproject</groupId>
         <artifactId>onos-apps</artifactId>
-        <version>1.9.0-SNAPSHOT</version>
+        <version>1.14.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>org.mao</groupId>
+    <groupId>com.maojianwei.onos</groupId>
     <artifactId>onos-app-mao-load-balance</artifactId>
     <packaging>bundle</packaging>
 
+    <!--
+      ~ Attention - Jianwei Mao
+      ~
+      ~ Please use BUCK to compile me.
+      ~
+      ~ Compile by embedding me with ONOS codebase,
+      ~            then modifying the modules.defs file in the ONOS_ROOT, referring modules.defs__available_example
+      ~            and finally build whole ONOS by onos-buck.
+      ~
+      ~
+      ~ You should NOT use maven to compile me, and maven may fail.
+      ~
+      -->
+
+
     <description>Mao Load Balance Routing</description>
-    <url>http://maojianwei.github.io/</url>
+    <url>http://www.maojianwei.com/</url>
 
     <properties>
         <web.context>/onos</web.context>
@@ -41,12 +56,12 @@
         </api.description>
         <api.package>org.fnl.rest</api.package>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <onos.version>1.8.0-SNAPSHOT</onos.version>
+        <onos.version>${parent.version}</onos.version>
         <onos.app.name>org.onosproject.mao.lb.routing</onos.app.name>
         <onos.app.title>Mao Load Balance Routing</onos.app.title>
         <onos.app.origin>Jianwei Mao, FNLab, BUPT</onos.app.origin>
         <onos.app.category>Traffic Steering</onos.app.category>
-        <onos.app.url>http://maojianwei.github.io/</onos.app.url>
+        <onos.app.url>http://www.maojianwei.com/</onos.app.url>
         <onos.app.readme>Load Balance Routing by Jianwei Mao</onos.app.readme>
     </properties>
 
@@ -59,16 +74,17 @@
         <dependency>
             <groupId>org.onosproject</groupId>
             <artifactId>onos-incubator-api</artifactId>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.onosproject</groupId>
             <artifactId>onos-core-common</artifactId>
-            <version>1.8.0-SNAPSHOT</version>
+            <version>${parent.version}</version>
         </dependency>
         <dependency>
             <groupId>org.onosproject</groupId>
             <artifactId>onos-app-routing-api</artifactId>
-            <version>1.8.0-SNAPSHOT</version>
+            <version>${parent.version}</version>
         </dependency>
     </dependencies>
 

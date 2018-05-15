@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fnl.rest;
+package com.maojianwei.sdwan.rest;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.fnl.intf.MaoRoutingService;
+import com.maojianwei.sdwan.intf.MaoRoutingService;
 import org.onosproject.incubator.net.PortStatisticsService;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.DeviceId;

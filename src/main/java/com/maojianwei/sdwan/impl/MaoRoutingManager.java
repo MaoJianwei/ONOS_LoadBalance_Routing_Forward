@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fnl.impl;
+package com.maojianwei.sdwan.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -24,7 +24,9 @@ import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.felix.scr.annotations.Reference;
 import org.apache.felix.scr.annotations.ReferenceCardinality;
 import org.apache.felix.scr.annotations.Service;
-import org.fnl.intf.MaoRoutingService;
+import com.maojianwei.sdwan.intf.MaoRoutingService;
+import org.onlab.graph.ScalarWeight;
+import org.onlab.graph.Weight;
 import org.onlab.packet.Ethernet;
 import org.onlab.packet.IPv4;
 import org.onlab.packet.IpPrefix;
@@ -59,7 +61,7 @@ import org.onosproject.net.packet.PacketProcessor;
 import org.onosproject.net.packet.PacketService;
 import org.onosproject.net.provider.ProviderId;
 import org.onosproject.net.topology.DefaultTopologyVertex;
-import org.onosproject.net.topology.LinkWeight;
+import org.onosproject.net.topology.MetricLinkWeight;
 import org.onosproject.net.topology.Topology;
 import org.onosproject.net.topology.TopologyEdge;
 import org.onosproject.net.topology.TopologyGraph;
@@ -190,7 +192,7 @@ public class MaoRoutingManager implements MaoRoutingService {
 
                 boolean isContain;
 //                synchronized (intentMap) {
-                    isContain = intentMap.containsKey(selector.criteria());
+                isContain = intentMap.containsKey(selector.criteria());
 //                }
                 if (isContain) {
                     context.block();
@@ -215,7 +217,7 @@ public class MaoRoutingManager implements MaoRoutingService {
                 intentService.submit(pathIntent);
 
 //                synchronized (intentMap) {
-                    intentMap.put(selector.criteria(), pathIntent);
+                intentMap.put(selector.criteria(), pathIntent);
 //                }
 
                 context.block();
@@ -428,12 +430,12 @@ public class MaoRoutingManager implements MaoRoutingService {
          */
         private double maxLinkWeight(List<TopologyEdge> edges) {
 
-            double weight = 0;
+            Weight weight = ScalarWeight.toWeight(0);
             for (TopologyEdge edge : edges) {
-                double linkWeight = bandwidthLinkWeightTool.weight(edge);
-                weight = weight < linkWeight ? linkWeight : weight;
+                Weight linkWeight = bandwidthLinkWeightTool.weight(edge);
+                weight = linkWeight.compareTo(weight) > 0 ? linkWeight : weight;
             }
-            return weight;
+            return ((ScalarWeight)weight).value();
         }
 
         /**
@@ -442,10 +444,12 @@ public class MaoRoutingManager implements MaoRoutingService {
          */
         private Path parseEdgeToPath(List<TopologyEdge> edges, double cost) {
 
+
+
             ArrayList links = new ArrayList();
             edges.forEach(edge -> links.add(edge.link()));
 
-            return new DefaultPath(routeProviderId, links, cost);
+            return new DefaultPath(routeProviderId, links, ScalarWeight.toWeight(cost));
         }
 
         //=================== Step Three: Select one route(Path) =====================
@@ -527,14 +531,14 @@ public class MaoRoutingManager implements MaoRoutingService {
 
             List<Link> links = Lists.newArrayListWithCapacity(2);
 
-            double cost = 0;
+            Weight cost = ScalarWeight.toWeight(0);
 
             // now, the cost of edge link is 0.
             links.add(srcLink);
 
             if (linkPath != null) {
                 links.addAll(linkPath.links());
-                cost += linkPath.cost();
+                cost.merge(linkPath.weight());
             }
 
             links.add(dstLink);
@@ -551,17 +555,30 @@ public class MaoRoutingManager implements MaoRoutingService {
      *
      * author: Jianwei Mao
      */
-    private class BandwidthLinkWeight implements LinkWeight {
+    private class BandwidthLinkWeight extends MetricLinkWeight {
 
+        private static final double LINK_WEIGHT_IDLE = 0;
         private static final double LINK_WEIGHT_DOWN = 100.0;
         private static final double LINK_WEIGHT_FULL = 100.0;
 
+
+        @Override
+        public Weight getInitialWeight() {
+            return ScalarWeight.toWeight(LINK_WEIGHT_IDLE);
+        }
+
+        @Override
+        public Weight getNonViableWeight() {
+            return ScalarWeight.toWeight(LINK_WEIGHT_DOWN);
+        }
+
+
         //FIXME - Bata1: Here, assume the edge is the inter-demain link
         @Override
-        public double weight(TopologyEdge edge) {
+        public Weight weight(TopologyEdge edge) {
 
             if (edge.link().state() == Link.State.INACTIVE) {
-                return LINK_WEIGHT_DOWN;
+                return ScalarWeight.toWeight(LINK_WEIGHT_DOWN);
             }
 
             long linkWireSpeed = getLinkWireSpeed(edge.link());
@@ -570,11 +587,11 @@ public class MaoRoutingManager implements MaoRoutingService {
             long interLinkRestBandwidth = linkWireSpeed - getLinkLoadSpeed(edge.link());
 
             if (interLinkRestBandwidth <= 0) {
-                return LINK_WEIGHT_FULL;
+                return ScalarWeight.toWeight(LINK_WEIGHT_FULL);
             }
 
             //restBandwidthPersent
-            return 100 - interLinkRestBandwidth * 1.0 / linkWireSpeed * 100;
+            return ScalarWeight.toWeight(100 - interLinkRestBandwidth * 1.0 / linkWireSpeed * 100);
         }
 
         private long getLinkWireSpeed(Link link) {

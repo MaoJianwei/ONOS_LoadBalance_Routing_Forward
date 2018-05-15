@@ -45,7 +45,7 @@
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.fnl.rest.MaoRestApplication</param-value>
+            <param-value>com.maojianwei.sdwan.rest.MaoRestApplication</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>

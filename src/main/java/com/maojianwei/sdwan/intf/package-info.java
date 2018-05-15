@@ -1,4 +1,4 @@
 /**
  * Created by mao on 1/11/17.
  */
-package org.fnl.rest;
+package com.maojianwei.sdwan.intf;
