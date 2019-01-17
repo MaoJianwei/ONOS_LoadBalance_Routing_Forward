@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maojianwei.sdwan.impl;
+package com.maojianwei.lb.routing.impl;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
-import org.apache.felix.scr.annotations.Reference;
-import org.apache.felix.scr.annotations.ReferenceCardinality;
-import org.apache.felix.scr.annotations.Service;
-import com.maojianwei.sdwan.intf.MaoRoutingService;
+import com.maojianwei.lb.routing.intf.MaoRoutingService;
 import org.onlab.graph.ScalarWeight;
 import org.onlab.graph.Weight;
 import org.onlab.packet.Ethernet;
@@ -33,7 +27,6 @@ import org.onlab.packet.IpPrefix;
 import org.onosproject.common.DefaultTopology;
 import org.onosproject.core.ApplicationId;
 import org.onosproject.core.CoreService;
-import org.onosproject.incubator.net.PortStatisticsService;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.DefaultEdgeLink;
 import org.onosproject.net.DefaultPath;
@@ -60,6 +53,7 @@ import org.onosproject.net.packet.PacketPriority;
 import org.onosproject.net.packet.PacketProcessor;
 import org.onosproject.net.packet.PacketService;
 import org.onosproject.net.provider.ProviderId;
+import org.onosproject.net.statistic.PortStatisticsService;
 import org.onosproject.net.topology.DefaultTopologyVertex;
 import org.onosproject.net.topology.MetricLinkWeight;
 import org.onosproject.net.topology.Topology;
@@ -67,6 +61,11 @@ import org.onosproject.net.topology.TopologyEdge;
 import org.onosproject.net.topology.TopologyGraph;
 import org.onosproject.net.topology.TopologyService;
 import org.onosproject.net.topology.TopologyVertex;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,36 +82,36 @@ import java.util.concurrent.ConcurrentMap;
  *
  * author: Jianwei Mao
  */
-@Component(immediate = true)
-@Service
+@Component(immediate = true,
+           service = {MaoRoutingService.class,})
 public class MaoRoutingManager implements MaoRoutingService {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final LoadBalanceRouting routing = new LoadBalanceRouting();
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private DeviceService deviceService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private PortStatisticsService portStatisticsService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private LinkService linkService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private PacketService packetService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private CoreService coreService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private HostService hostService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private TopologyService topologyService;
 
-    @Reference(cardinality = ReferenceCardinality.MANDATORY_UNARY)
+    @Reference(cardinality = ReferenceCardinality.MANDATORY)
     private IntentService intentService;
 
     private ApplicationId appId;
@@ -123,7 +122,7 @@ public class MaoRoutingManager implements MaoRoutingService {
     protected void activate() {
         intentMap.clear();
 
-        appId = coreService.registerApplication("org.onosproject.mao.lb.routing");
+        appId = coreService.registerApplication("org.onosproject.ONOS_LoadBalance_Routing_Forward.lb.routing");
 
         packetService.addProcessor(packetProcessor, PacketProcessor.director(0));
 

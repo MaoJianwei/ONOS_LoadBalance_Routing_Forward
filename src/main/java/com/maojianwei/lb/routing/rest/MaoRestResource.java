@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.maojianwei.sdwan.rest;
+package com.maojianwei.lb.routing.rest;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.maojianwei.sdwan.intf.MaoRoutingService;
-import org.onosproject.incubator.net.PortStatisticsService;
+import com.maojianwei.lb.routing.intf.MaoRoutingService;
 import org.onosproject.net.ConnectPoint;
 import org.onosproject.net.DeviceId;
 import org.onosproject.net.device.DeviceService;
 import org.onosproject.net.link.LinkService;
+import org.onosproject.net.statistic.PortStatisticsService;
 import org.onosproject.rest.AbstractWebResource;
 
 import javax.ws.rs.GET;
@@ -37,7 +37,7 @@ import java.util.Set;
  * ONOS REST API Docs
  * http://127.0.0.1:8181/onos/v1/docs/
  */
-@Path("mao")
+@Path("ONOS_LoadBalance_Routing_Forward")
 public class MaoRestResource extends AbstractWebResource {
 
     private MaoRoutingService maoRoutingService = get(MaoRoutingService.class);
