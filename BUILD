@@ -3,15 +3,18 @@ COMPILE_DEPS = CORE_DEPS + JACKSON + REST + [
 ]
 
 osgi_jar_with_tests (
-    karaf_command_packages = ["com.maojianwei.lb.routing"],
     deps = COMPILE_DEPS,
-)
 
+    api_package = "com.maojianwei.lb.routing",
+    api_description = "BigMao Radio Station REST API v1.0, for Load-Balance Routing",
+    api_title = "BigMao Radio Station REST API v1.0",
+    api_version = "/onos/v1/Mao",
+    web_context = "/onos/Mao",
+)
 
 REQUIRE_APPS = [
     "org.onosproject.proxyarp",
 ]
-
 
 onos_app (
     title = "Mao Load-Balance Reactive Forward",

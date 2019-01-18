@@ -27,6 +27,8 @@ import org.onosproject.rest.AbstractWebResource;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashSet;
 import java.util.Set;
@@ -56,6 +58,7 @@ public class MaoRestResource extends AbstractWebResource {
      */
     @GET
     @Path("hello")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response hello() {
         ObjectNode root = mapper().createObjectNode();
         root.put("Hello", 1080)
@@ -64,7 +67,7 @@ public class MaoRestResource extends AbstractWebResource {
         ArrayNode array = root.putArray("RadioStation");
         array.add("192.168.1.1").add("127.0.0.1").add("10.3.8.211");
 
-        return ok(root).build();
+        return ok(root.toString()).build();
     }
 
 
@@ -78,6 +81,7 @@ public class MaoRestResource extends AbstractWebResource {
      */
     @GET
     @Path("getLinksLoad")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getLinksLoad() {
 
         Set<String> linksList = new HashSet<>();
@@ -124,7 +128,7 @@ public class MaoRestResource extends AbstractWebResource {
             capabilities.add(linkNode);
         });
 
-        return ok(root).build();
+        return ok(root.toString()).build();
     }
 
     /**

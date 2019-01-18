@@ -47,7 +47,7 @@
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>jersey.config.server.provider.classnames</param-name>
-            <param-value>com.maojianwei.lb.routing.rest.MaoRestApplication</param-value>
+            <param-value>com.maojianwei.lb.routing.rest.MaoRestResource</param-value>
         </init-param>
         <load-on-startup>10</load-on-startup>
     </servlet>
@@ -57,3 +57,37 @@
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
 </web-app>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
