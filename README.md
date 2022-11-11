@@ -22,7 +22,7 @@ Knowledge articles:
 
 ## Demo
 
-![ONOS_LoadBalance_Routing_Forward by Mao Jianwei](https://www.maojianwei.com/resources/picture/2016/10/onosLB/1-load-balance-example.png)
+![ONOS_LoadBalance_Routing_Forward by Mao Jianwei](http://www.maojianwei.com/resources/picture/2016/10/onosLB/1-load-balance-example.png)
 
 .
 
